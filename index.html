@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>메탈카드봇 퀴즈! 🤖</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --primary: #1e88e5;
+    --primary-dark: #1565c0;
+    --accent: #ffeb3b;
+    --success: #43a047;
+    --error: #e53935;
+    --bg-grad-1: #0d47a1;
+    --bg-grad-2: #1976d2;
+    --bg-grad-3: #42a5f5;
+    --card-bg: #ffffff;
+    --text-dark: #1a237e;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 50%, var(--bg-grad-3) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    position: relative;
+  }
+
+  /* 배경 별 효과 */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(2px 2px at 20% 30%, white, transparent),
+      radial-gradient(2px 2px at 60% 70%, white, transparent),
+      radial-gradient(1px 1px at 50% 50%, white, transparent),
+      radial-gradient(1px 1px at 80% 10%, white, transparent),
+      radial-gradient(2px 2px at 90% 60%, white, transparent),
+      radial-gradient(1px 1px at 33% 80%, white, transparent),
+      radial-gradient(1px 1px at 15% 90%, white, transparent);
+    background-size: 200% 200%;
+    pointer-events: none;
+    z-index: 0;
+    animation: twinkle 6s ease-in-out infinite alternate;
+  }
+
+  @keyframes twinkle {
+    0% { opacity: 0.3; }
+    100% { opacity: 0.9; }
+  }
+
+  .container {
+    width: 100%;
+    max-width: 540px;
+    background: var(--card-bg);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.35), 0 0 0 4px rgba(255,255,255,0.1);
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 헤더 */
+  .header {
+    background: linear-gradient(135deg, #ff5722 0%, #ff9800 50%, #ffc107 100%);
+    padding: 24px 20px;
+    text-align: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 20px,
+      rgba(255,255,255,0.05) 20px,
+      rgba(255,255,255,0.05) 40px
+    );
+    animation: slide 20s linear infinite;
+  }
+
+  @keyframes slide {
+    from { transform: translate(0,0); }
+    to { transform: translate(40px,40px); }
+  }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 900;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .header .subtitle {
+    font-size: 14px;
+    margin-top: 6px;
+    opacity: 0.95;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* 진행 바 */
+  .progress-wrapper {
+    padding: 16px 20px 0;
+    background: #f5f7fb;
+  }
+
+  .progress-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-dark);
+  }
+
+  .score-badge {
+    background: linear-gradient(135deg, #ffeb3b, #ffc107);
+    padding: 4px 12px;
+    border-radius: 20px;
+    color: #5d4037;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+
+  .progress-bar {
+    height: 10px;
+    background: #e0e0e0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    border-radius: 10px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px rgba(76,175,80,0.5);
+  }
+
+  /* 카테고리 태그 */
+  .category-tag {
+    display: inline-block;
+    margin: 0 0 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 800;
+    color: white;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+  }
+
+  .category-tag.character { background: linear-gradient(135deg, #e91e63, #ad1457); }
+  .category-tag.robot { background: linear-gradient(135deg, #1e88e5, #0d47a1); }
+  .category-tag.story { background: linear-gradient(135deg, #43a047, #1b5e20); }
+
+  /* 퀴즈 영역 */
+  .quiz-area {
+    padding: 24px 20px;
+    background: #f5f7fb;
+    min-height: 360px;
+  }
+
+  .question {
+    font-size: 19px;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.45;
+    margin-bottom: 20px;
+    word-break: keep-all;
+  }
+
+  .question-number {
+    color: #ff5722;
+    margin-right: 6px;
+  }
+
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .option {
+    background: white;
+    border: 3px solid #e3e8f0;
+    border-radius: 16px;
+    padding: 16px 18px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    word-break: keep-all;
+    line-height: 1.4;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+  }
+
+  .option-letter {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e88e5, #0d47a1);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 900;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+
+  .option:active {
+    transform: scale(0.97);
+  }
+
+  @media (hover: hover) {
+    .option:hover:not(.disabled) {
+      border-color: #1e88e5;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(30,136,229,0.25);
+    }
+  }
+
+  .option.correct {
+    border-color: var(--success);
+    background: linear-gradient(135deg, #c8e6c9, #a5d6a7);
+    animation: pop 0.4s ease;
+  }
+
+  .option.correct .option-letter {
+    background: linear-gradient(135deg, var(--success), #1b5e20);
+  }
+
+  .option.wrong {
+    border-color: var(--error);
+    background: linear-gradient(135deg, #ffcdd2, #ef9a9a);
+    animation: shake 0.4s ease;
+  }
+
+  .option.wrong .option-letter {
+    background: linear-gradient(135deg, var(--error), #b71c1c);
+  }
+
+  .option.disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* 해설 */
+  .explanation {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #fff9c4, #fff59d);
+    border-left: 5px solid #fbc02d;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #5d4037;
+    font-weight: 600;
+    word-break: keep-all;
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .explanation.show {
+    display: block;
+  }
+
+  .explanation strong {
+    color: #ff5722;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 버튼 */
+  .btn-row {
+    padding: 0 20px 20px;
+    background: #f5f7fb;
+  }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 16px;
+    font-size: 17px;
+    font-weight: 800;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: linear-gradient(135deg, #ff5722, #d84315);
+    box-shadow: 0 6px 16px rgba(216,67,21,0.35);
+    letter-spacing: -0.3px;
+  }
+
+  .btn:active { transform: translateY(2px); box-shadow: 0 2px 8px rgba(216,67,21,0.35); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn.btn-restart {
+    background: linear-gradient(135deg, #1e88e5, #0d47a1);
+    box-shadow: 0 6px 16px rgba(13,71,161,0.35);
+  }
+
+  /* 시작 화면 */
+  .start-screen, .end-screen {
+    padding: 40px 24px;
+    text-align: center;
+    background: #f5f7fb;
+  }
+
+  .start-screen .robot-emoji {
+    font-size: 80px;
+    margin-bottom: 16px;
+    display: inline-block;
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-15px) rotate(5deg); }
+  }
+
+  .start-screen h2, .end-screen h2 {
+    font-size: 26px;
+    color: var(--text-dark);
+    margin-bottom: 12px;
+    font-weight: 900;
+  }
+
+  .start-screen p, .end-screen p {
+    font-size: 15px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 24px;
+    word-break: keep-all;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin: 20px 0 28px;
+  }
+
+  .info-card {
+    background: white;
+    padding: 14px 8px;
+    border-radius: 14px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+  }
+
+  .info-card .icon {
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+
+  .info-card .label {
+    font-size: 11px;
+    color: #555;
+    font-weight: 700;
+  }
+
+  .info-card .value {
+    font-size: 18px;
+    color: var(--text-dark);
+    font-weight: 900;
+  }
+
+  /* 종료 화면 */
+  .score-circle {
+    width: 160px;
+    height: 160px;
+    margin: 0 auto 16px;
+    border-radius: 50%;
+    background: conic-gradient(#ffeb3b 0%, #ff9800 50%, #ff5722 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(255,87,34,0.4);
+    position: relative;
+  }
+
+  .score-circle::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    background: white;
+  }
+
+  .score-circle .score-text {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+
+  .score-circle .score-num {
+    font-size: 48px;
+    font-weight: 900;
+    color: #ff5722;
+    line-height: 1;
+  }
+
+  .score-circle .score-total {
+    font-size: 16px;
+    color: #777;
+    font-weight: 700;
+  }
+
+  .rank-text {
+    font-size: 22px;
+    font-weight: 900;
+    margin: 12px 0;
+  }
+
+  .rank-text.rank-s { color: #ff5722; }
+  .rank-text.rank-a { color: #43a047; }
+  .rank-text.rank-b { color: #1e88e5; }
+  .rank-text.rank-c { color: #757575; }
+
+  /* 작은 화면 */
+  @media (max-width: 380px) {
+    .header h1 { font-size: 24px; }
+    .question { font-size: 17px; }
+    .option { font-size: 15px; padding: 14px; }
+    .info-grid { gap: 6px; }
+    .info-card { padding: 12px 4px; }
+    .info-card .value { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- 시작 화면 -->
+  <div id="startScreen">
+    <div class="header">
+      <h1>🤖 메탈카드봇 퀴즈</h1>
+      <div class="subtitle">메탈브레스 마스터에 도전하라!</div>
+    </div>
+    <div class="start-screen">
+      <span class="robot-emoji">🤖</span>
+      <h2>준비됐니, 친구들?</h2>
+      <p>주인공, 로봇 캐릭터, 스토리에 대한<br>흥미진진한 퀴즈가 기다리고 있어요!<br>몇 점을 맞힐 수 있을지 도전해 봐요!</p>
+
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="icon">📋</div>
+          <div class="label">총 문제</div>
+          <div class="value">50개</div>
+        </div>
+        <div class="info-card">
+          <div class="icon">🎯</div>
+          <div class="label">선택지</div>
+          <div class="value">4개</div>
+        </div>
+        <div class="info-card">
+          <div class="icon">⏱️</div>
+          <div class="label">예상 시간</div>
+          <div class="value">15분</div>
+        </div>
+      </div>
+
+      <button class="btn" onclick="startQuiz()">🚀 퀴즈 시작하기</button>
+    </div>
+  </div>
+
+  <!-- 퀴즈 화면 -->
+  <div id="quizScreen" style="display:none;">
+    <div class="header">
+      <h1>🤖 메탈카드봇 퀴즈</h1>
+      <div class="subtitle" id="categorySubtitle">출제 중...</div>
+    </div>
+    <div class="progress-wrapper">
+      <div class="progress-info">
+        <span id="qCount">문제 1 / 15</span>
+        <span class="score-badge">⭐ <span id="curScore">0</span>점</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="quiz-area">
+      <span class="category-tag" id="catTag">주인공</span>
+      <div class="question" id="questionText"></div>
+      <div class="options" id="optionsList"></div>
+      <div class="explanation" id="explanation"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="nextBtn" disabled onclick="nextQuestion()">다음 문제 →</button>
+    </div>
+  </div>
+
+  <!-- 결과 화면 -->
+  <div id="endScreen" style="display:none;">
+    <div class="header">
+      <h1>🏆 퀴즈 결과</h1>
+      <div class="subtitle">수고했어요!</div>
+    </div>
+    <div class="end-screen">
+      <div class="score-circle">
+        <div class="score-text">
+          <div class="score-num" id="finalScore">0</div>
+          <div class="score-total">/ 50점</div>
+        </div>
+      </div>
+      <div class="rank-text" id="rankText">등급</div>
+      <p id="rankComment">멘트</p>
+      <button class="btn btn-restart" onclick="restartQuiz()">🔄 다시 도전하기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const QUESTIONS = [
+  // ========== 주인공 ==========
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "메탈카드봇 시리즈의 인간 주인공의 이름은 무엇일까요?",
+    options: ["김준수", "준 그랜트", "이준호", "강철수"],
+    answer: 1,
+    explain: "인간 주인공은 <strong>'준 그랜트'</strong>예요. BMX 자전거 타기를 좋아하는 소년이랍니다!"
+  },
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "주인공 '준'이 가장 좋아하는 활동은 무엇일까요?",
+    options: ["축구", "BMX 자전거 타기", "수영", "그림 그리기"],
+    answer: 1,
+    explain: "준은 <strong>BMX(자전거) 타기</strong>를 정말 좋아하는 활기찬 소년이에요!"
+  },
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "준이 우연히 줍게 된 특별한 도구의 이름은?",
+    options: ["메탈워치", "메탈브레스", "메탈카드", "메탈링"],
+    answer: 1,
+    explain: "준은 블루캅이 떨어뜨린 <strong>'메탈브레스'</strong>를 우연히 줍게 돼요. 선택된 자만이 사용할 수 있는 도구죠!"
+  },
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "메탈브레스의 주인은 어떻게 정해질까요?",
+    options: ["돈을 많이 낸 사람", "선택된 자만 가질 수 있음", "가장 키가 큰 사람", "어른만 사용 가능"],
+    answer: 1,
+    explain: "메탈브레스는 <strong>선택된 자</strong>만이 지닐 수 있는 특별한 도구예요. 준이 바로 그 적합자랍니다!"
+  },
+
+  // ========== 로봇 캐릭터 ==========
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "준과 함께 모험하는 주역 메탈카드봇의 이름은?",
+    options: ["레드캅", "블루캅", "그린캅", "옐로캅"],
+    answer: 1,
+    explain: "주역 메탈카드봇은 <strong>'블루캅'</strong>이에요. 준과 함께 더블 주인공으로 활약한답니다!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "메탈카드봇들은 지구에서 어떤 모습으로 변신해 살고 있을까요?",
+    options: ["사람", "동물", "탈것(자동차 등)", "식물"],
+    answer: 2,
+    explain: "메탈카드봇들은 자동차 같은 <strong>탈것</strong>으로 변신해서 조용히 지구에 살고 있었어요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "메탈카드봇은 어떤 형태로 봉인할 수 있을까요?",
+    options: ["메탈볼", "메탈카드", "메탈박스", "메탈큐브"],
+    answer: 1,
+    explain: "메탈브레스를 사용하면 메탈카드봇을 <strong>'메탈카드'</strong> 형태로 봉인할 수 있어요. 그래서 이름이 '메탈카드봇'이랍니다!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "봉인된 메탈카드봇은 누구의 허가가 있어야 행동할 수 있을까요?",
+    options: ["대통령", "소유자(주인)", "학교 선생님", "부모님"],
+    answer: 1,
+    explain: "봉인된 메탈카드봇은 <strong>소유자의 허가</strong>가 있어야 움직일 수 있어요. 그래서 메탈브레스 주인이 중요한 거죠!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "메탈카드봇들은 어떤 종류의 생명체일까요?",
+    options: ["식물 생명체", "기계 생명체", "물 생명체", "불 생명체"],
+    answer: 1,
+    explain: "메탈카드봇은 혹성 마키나에서 온 <strong>기계 생명체</strong>예요. 살아있는 로봇이라고 생각하면 돼요!"
+  },
+
+  // ========== 스토리라인 ==========
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇들이 원래 살던 행성의 이름은?",
+    options: ["혹성 가이아", "혹성 마키나", "혹성 네오", "혹성 시그마"],
+    answer: 1,
+    explain: "메탈카드봇들의 고향은 바로 <strong>'혹성 마키나'</strong>예요. 지구에서 아주 멀리 떨어진 별이랍니다!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇들이 고향 행성을 떠난 이유는 무엇일까요?",
+    options: ["여행을 가려고", "행성이 대폭발을 일으켜서", "친구를 사귀러", "지구 음식이 먹고 싶어서"],
+    answer: 1,
+    explain: "혹성 마키나가 갑자기 <strong>대폭발</strong>을 일으켜서, 메탈카드봇들은 가까스로 탈출해 우주로 흩어지게 됐어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "블루캅과 메탈카드봇들이 도착한 행성은 어디일까요?",
+    options: ["화성", "달", "지구", "목성"],
+    answer: 2,
+    explain: "블루캅과 메탈카드봇들은 <strong>지구</strong>에 도착해서 조용히 살아가고 있었어요. 그러다 준을 만나게 된 거죠!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "준과 블루캅이 함께 꿈꾸는 세상은 어떤 모습일까요?",
+    options: ["인간만 사는 세상", "로봇만 사는 세상", "인간과 메탈카드봇이 공존하는 세상", "동물이 지배하는 세상"],
+    answer: 2,
+    explain: "준과 블루캅은 <strong>인간과 메탈카드봇이 서로를 이해하고 함께 공존하는 세상</strong>을 꿈꾸고 있답니다!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 시리즈에는 지금까지 몇 개의 시즌이 방영됐을까요?",
+    options: ["1개", "2개", "3개", "5개"],
+    answer: 2,
+    explain: "메탈카드봇은 시즌1, 메탈카드봇S, 메탈카드봇W까지 <strong>총 3개의 시즌</strong>이 방영되었어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 2기의 부제는 무엇일까요?",
+    options: ["메탈카드봇 W", "메탈카드봇 S", "메탈카드봇 X", "메탈카드봇 Z"],
+    answer: 1,
+    explain: "2기의 정식 명칭은 <strong>'메탈카드봇 S'</strong>예요. EBS에서 방영했답니다! (참고로 3기는 메탈카드봇 W예요)"
+  },
+
+  // ========== 추가 문제: 주인공 ==========
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "준 그랜트의 성(family name)은 무엇일까요?",
+    options: ["마키나", "그랜트", "메탈", "카드"],
+    answer: 1,
+    explain: "주인공의 성(family name)은 <strong>'그랜트'</strong>예요. 그래서 풀네임이 '준 그랜트'랍니다!"
+  },
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "준 그랜트와 블루캅은 시리즈에서 어떤 사이일까요?",
+    options: ["적과 라이벌", "더블 주인공(파트너)", "선생과 제자", "할아버지와 손자"],
+    answer: 1,
+    explain: "둘은 시리즈를 함께 이끌어 가는 <strong>더블 주인공</strong>이에요. 환상의 콤비랍니다!"
+  },
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "준 그랜트가 평소에 살고 있는 곳은 어디일까요?",
+    options: ["마키나 행성", "지구", "우주 정거장", "달"],
+    answer: 1,
+    explain: "준은 우리와 똑같은 <strong>'지구'</strong>에 사는 평범한 소년이에요!"
+  },
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "준이 메탈브레스의 주인이 된 결정적인 행동은?",
+    options: ["할아버지에게 받음", "줍고 작동시킴", "친구에게 빌림", "꿈에서 받음"],
+    answer: 1,
+    explain: "준은 블루캅이 떨어뜨린 메탈브레스를 <strong>주워서 작동시키며</strong> 적합자로 인정받았어요!"
+  },
+  {
+    cat: "character",
+    catLabel: "👦 주인공",
+    q: "메탈카드봇은 어떤 시청자들을 위해 만들어진 만화일까요?",
+    options: ["어른", "어린이", "할아버지", "회사원"],
+    answer: 1,
+    explain: "메탈카드봇은 <strong>어린이</strong>들을 위한 신나는 로봇 액션 애니메이션이에요!"
+  },
+
+  // ========== 추가 문제: 로봇 캐릭터 ==========
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "마키나 행성의 '마더 컴퓨터' 이름은 무엇일까요?",
+    options: ["슈퍼 마키나", "데우스 마키나", "마더 카드", "메탈 마더"],
+    answer: 1,
+    explain: "마키나 행성의 마더 컴퓨터는 <strong>'데우스 마키나'</strong>예요. 위대한 존재로 칭송받아요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "메탈브레스를 처음 만든(개발한) 존재는 누구일까요?",
+    options: ["준 그랜트", "블루캅", "데우스 마키나", "지구의 과학자"],
+    answer: 2,
+    explain: "메탈브레스의 개발자는 바로 <strong>데우스 마키나</strong>예요. 마키나인을 다룰 수 있는 특별한 도구죠!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "메탈카드봇들과 맞서 싸우는 적의 이름은?",
+    options: ["다크카드봇", "와일드카드봇", "슈퍼카드봇", "라이트카드봇"],
+    answer: 1,
+    explain: "메탈카드봇들의 적은 <strong>'와일드카드봇'</strong>이에요. 위협적인 존재랍니다!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "와일드카드봇에 맞서기 위해 만들어진 정의의 단체는?",
+    options: ["메탈가디언", "스타 가디언즈", "카드 히어로즈", "마키나 군단"],
+    answer: 1,
+    explain: "데우스 마키나가 만든 <strong>'스타 가디언즈'</strong>가 와일드카드봇과 맞서 싸워요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "스타 가디언즈를 창설한 존재는 누구일까요?",
+    options: ["준 그랜트", "블루캅", "데우스 마키나", "기간트렉스"],
+    answer: 2,
+    explain: "<strong>데우스 마키나</strong>가 와일드카드봇과의 전쟁을 위해 스타 가디언즈를 창설했어요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "메탈카드봇S에 등장하는 마키나 행성의 영웅은?",
+    options: ["플레임노바", "기간트렉스", "블루캅", "데우스 마키나"],
+    answer: 1,
+    explain: "마키나 행성의 영웅은 <strong>'기간트렉스'</strong>예요. 스펠란자호의 선장이기도 해요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "기간트렉스가 선장으로 있는 함선의 이름은?",
+    options: ["메탈호", "스펠란자호", "마키나호", "스타호"],
+    answer: 1,
+    explain: "기간트렉스는 <strong>'스펠란자호'</strong>의 선장이에요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "플레임노바가 훔치려고 했던 중요한 물건은?",
+    options: ["메탈브레스", "메모리 코어", "메탈카드", "변신 장치"],
+    answer: 1,
+    explain: "플레임노바는 성역에 침입해 <strong>'메모리 코어'</strong>를 훔치려고 했어요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "플레임노바가 데우스 마키나에게 받은 처벌은?",
+    options: ["우주로 추방", "합체 능력 봉인 + 스타 가디언즈 제명", "카드로 봉인", "행성으로 강제 송환"],
+    answer: 1,
+    explain: "플레임노바는 <strong>합체 능력이 봉인되고 스타 가디언즈에서 제명</strong>당하는 처벌을 받았어요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "메탈카드봇W의 'W'는 어떤 단어의 약자일까요?",
+    options: ["Win(승리)", "Wild(야생)", "Water(물)", "Wonder(놀라움)"],
+    answer: 1,
+    explain: "'W'는 사납고 야생적이라는 뜻의 <strong>'Wild(와일드)'</strong>의 약자예요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "메탈카드봇W에 등장하는 메탈카드봇들의 특징은?",
+    options: ["식물 모습", "동물의 특성을 가짐", "음식 모습", "꽃 모습"],
+    answer: 1,
+    explain: "메탈카드봇W의 로봇들은 <strong>동물의 특성</strong>을 가지고 있어요. 그래서 'Wild(야생)'인 거죠!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "'메탈카드봇W'의 'W'는 어떻게 발음할까요?",
+    options: ["더블유", "와일드", "워", "윈"],
+    answer: 1,
+    explain: "'W'는 글자 그대로가 아니라 <strong>'와일드'</strong>라고 읽어요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "데우스 마키나가 행성 폭발 전까지 직접 보관하던 도구는?",
+    options: ["메탈카드", "메탈브레스", "메모리 코어", "스펠란자호"],
+    answer: 1,
+    explain: "데우스 마키나는 마키나 행성이 폭발하기 전까지 <strong>메탈브레스</strong>를 직접 보관하고 있었어요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "마키나 행성에서 꽃피웠던 문명은 어떤 종류일까요?",
+    options: ["음악 문명", "고도의 기계 문명", "농업 문명", "미술 문명"],
+    answer: 1,
+    explain: "마키나 행성은 데우스 마키나의 치하에서 <strong>고도의 기계 문명</strong>을 꽃피웠어요!"
+  },
+  {
+    cat: "robot",
+    catLabel: "🤖 로봇 캐릭터",
+    q: "블루캅이 마키나 행성에서 탈출하면서 가지고 나온 것은?",
+    options: ["메탈카드", "메탈브레스", "메모리 코어", "기간트렉스의 함선"],
+    answer: 1,
+    explain: "블루캅은 데우스 마키나의 마지막 전언에 따라 <strong>메탈브레스</strong>를 가지고 탈출했어요!"
+  },
+
+  // ========== 추가 문제: 스토리 ==========
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 시리즈는 어느 나라의 애니메이션일까요?",
+    options: ["일본", "미국", "대한민국", "중국"],
+    answer: 2,
+    explain: "메탈카드봇은 자랑스러운 <strong>대한민국(한국)</strong>의 애니메이션이에요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 시리즈를 제작한 회사는 어디일까요?",
+    options: ["디즈니", "에스에이엠지(SAMG) 엔터테인먼트", "지브리", "픽사"],
+    answer: 1,
+    explain: "메탈카드봇은 <strong>SAMG 엔터테인먼트(스튜디오 준)</strong>에서 만든 작품이에요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 1기는 어느 해에 처음 방영되었을까요?",
+    options: ["2020년", "2022년", "2023년", "2025년"],
+    answer: 2,
+    explain: "메탈카드봇 1기는 <strong>2023년 3월 29일</strong>에 처음 방영되었어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 1기는 어느 채널에서 처음 방영되었을까요?",
+    options: ["EBS 1TV", "대교어린이TV", "KBS", "디즈니 채널"],
+    answer: 1,
+    explain: "1기는 <strong>대교어린이TV</strong>에서 매주 수요일에 방영되었어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 1기는 매주 무슨 요일에 방영했을까요?",
+    options: ["월요일", "수요일", "금요일", "일요일"],
+    answer: 1,
+    explain: "1기는 매주 <strong>수요일 오후 5시 30분</strong>에 방영되었어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 2기(S)의 정식 부제는 무엇일까요?",
+    options: ["강철의 포효", "강철의 귀환", "강철의 영웅", "강철의 시작"],
+    answer: 1,
+    explain: "2기의 정식 명칭은 <strong>'메탈카드봇S 강철의 귀환'</strong>이에요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 3기(W)의 정식 부제는 무엇일까요?",
+    options: ["강철의 귀환", "강철의 포효", "강철의 빛", "강철의 전사"],
+    answer: 1,
+    explain: "3기의 정식 명칭은 <strong>'메탈카드봇W 강철의 포효'</strong>예요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 S는 어느 채널에서 방영되었을까요?",
+    options: ["대교어린이TV", "EBS 1TV", "KBS", "투니버스"],
+    answer: 1,
+    explain: "메탈카드봇S부터는 <strong>EBS 1TV</strong>에서 방영되고 있어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 S는 몇 년에 방영을 시작했을까요?",
+    options: ["2022년", "2023년", "2024년", "2026년"],
+    answer: 2,
+    explain: "메탈카드봇S는 <strong>2024년 8월 26일</strong>에 EBS 1TV에서 방영을 시작했어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 W는 몇 년에 방영을 시작했을까요?",
+    options: ["2023년", "2024년", "2025년", "2027년"],
+    answer: 2,
+    explain: "메탈카드봇W는 <strong>2025년 12월 4일</strong>에 EBS에서 방영을 시작했어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "데우스 마키나가 블루캅에게 남긴 마지막 전언의 핵심은?",
+    options: ["지구를 정복하라", "메탈브레스를 이용해 친구를 찾아라", "고향으로 돌아오라", "다른 메탈카드봇과 싸워라"],
+    answer: 1,
+    explain: "데우스 마키나는 <strong>'메탈브레스를 이용해 친구를 찾아라'</strong>라는 마지막 전언을 남겼어요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "마키나 행성이 폭발했을 때 메탈카드봇들은 어떻게 됐을까요?",
+    options: ["모두 사라짐", "우주로 뿔뿔이 흩어짐", "행성에 그대로 갇힘", "모두 카드로 봉인됨"],
+    answer: 1,
+    explain: "행성이 폭발하면서 메탈카드봇들은 <strong>우주로 뿔뿔이 흩어졌어요</strong>!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "준이 메탈브레스를 작동시킨 이후 시작된 일은?",
+    options: ["학교 시험 준비", "모험과 사건에 휘말림", "조용한 휴가", "혼자만의 여행"],
+    answer: 1,
+    explain: "준은 메탈브레스의 주인이 된 이후 <strong>모험과 사건에 휘말리게</strong> 돼요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 시리즈는 몇 D 애니메이션일까요?",
+    options: ["2D", "3D", "4D", "흑백"],
+    answer: 1,
+    explain: "메탈카드봇은 멋진 액션을 보여주는 <strong>3D 애니메이션</strong>이에요!"
+  },
+  {
+    cat: "story",
+    catLabel: "📖 스토리",
+    q: "메탈카드봇 시리즈에서 준이 블루캅과 함께 자주 하는 일은?",
+    options: ["악당을 메탈카드로 봉인하기", "운동회 참가", "보물 사냥", "바다 낚시"],
+    answer: 0,
+    explain: "준은 메탈브레스의 힘을 이용해 메탈카드봇들을 <strong>메탈카드로 봉인</strong>하면서 모험을 펼쳐요!"
+  }
+];
+
+let currentQ = 0;
+let score = 0;
+let answered = false;
+
+function startQuiz() {
+  document.getElementById('startScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  currentQ = 0;
+  score = 0;
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  const q = QUESTIONS[currentQ];
+
+  // 카테고리
+  const catTag = document.getElementById('catTag');
+  catTag.className = 'category-tag ' + q.cat;
+  catTag.textContent = q.catLabel;
+
+  document.getElementById('categorySubtitle').textContent = q.catLabel;
+
+  // 질문
+  document.getElementById('questionText').innerHTML =
+    '<span class="question-number">Q' + (currentQ+1) + '.</span>' + q.q;
+
+  // 진행
+  document.getElementById('qCount').textContent =
+    '문제 ' + (currentQ+1) + ' / ' + QUESTIONS.length;
+  document.getElementById('curScore').textContent = score;
+  document.getElementById('progressFill').style.width =
+    ((currentQ) / QUESTIONS.length * 100) + '%';
+
+  // 옵션
+  const list = document.getElementById('optionsList');
+  list.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.innerHTML = '<span class="option-letter">' + letters[i] + '</span><span>' + opt + '</span>';
+    btn.onclick = () => selectAnswer(i, btn);
+    list.appendChild(btn);
+  });
+
+  // 해설 / 버튼 초기화
+  document.getElementById('explanation').classList.remove('show');
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('nextBtn').textContent =
+    (currentQ === QUESTIONS.length - 1) ? '🏆 결과 보기' : '다음 문제 →';
+}
+
+function selectAnswer(idx, btn) {
+  if (answered) return;
+  answered = true;
+
+  const q = QUESTIONS[currentQ];
+  const allBtns = document.querySelectorAll('.option');
+
+  allBtns.forEach((b, i) => {
+    b.classList.add('disabled');
+    if (i === q.answer) b.classList.add('correct');
+    else if (i === idx) b.classList.add('wrong');
+  });
+
+  if (idx === q.answer) {
+    score++;
+    document.getElementById('curScore').textContent = score;
+  }
+
+  // 해설 표시
+  const exp = document.getElementById('explanation');
+  const isCorrect = idx === q.answer;
+  exp.innerHTML = (isCorrect ? '🎉 <strong>정답!</strong> ' : '😅 <strong>아쉬워요!</strong> ') + q.explain;
+  exp.classList.add('show');
+
+  // 진행바 업데이트
+  document.getElementById('progressFill').style.width =
+    ((currentQ + 1) / QUESTIONS.length * 100) + '%';
+
+  // 다음 버튼 활성화
+  document.getElementById('nextBtn').disabled = false;
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= QUESTIONS.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('endScreen').style.display = 'block';
+  document.getElementById('finalScore').textContent = score;
+
+  const rankEl = document.getElementById('rankText');
+  const cmtEl = document.getElementById('rankComment');
+  const pct = score / QUESTIONS.length;
+
+  if (pct >= 0.9) {
+    rankEl.textContent = '🏆 메탈브레스 마스터! (S등급)';
+    rankEl.className = 'rank-text rank-s';
+    cmtEl.textContent = '와! 진짜 메탈카드봇 박사예요! 준 그랜트도 깜짝 놀랄 정도네요! 🌟';
+  } else if (pct >= 0.7) {
+    rankEl.textContent = '✨ 훌륭해요! (A등급)';
+    rankEl.className = 'rank-text rank-a';
+    cmtEl.textContent = '대단해요! 메탈카드봇에 대해 정말 잘 알고 있네요! 🤖';
+  } else if (pct >= 0.5) {
+    rankEl.textContent = '👍 잘했어요! (B등급)';
+    rankEl.className = 'rank-text rank-b';
+    cmtEl.textContent = '좋아요! 조금만 더 보면 마스터가 될 수 있어요! 💪';
+  } else {
+    rankEl.textContent = '🌱 도전 시작! (C등급)';
+    rankEl.className = 'rank-text rank-c';
+    cmtEl.textContent = '괜찮아요! 메탈카드봇을 더 보고 다시 도전해 봐요! 🚀';
+  }
+}
+
+function restartQuiz() {
+  document.getElementById('endScreen').style.display = 'none';
+  document.getElementById('startScreen').style.display = 'block';
+}
+</script>
+</body>
+</html>
